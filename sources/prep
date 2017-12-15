@@ -1,0 +1,42 @@
+#!/bin/rc
+# sources/prep - prepare sources for Mercurial
+
+# pull sources; always copy from server:
+replica/pull -v -s / `{pwd}^/replica/sources
+
+# copy replica to working filesystem:
+files=`{ls -d /n/import/* >[2]/dev/null}
+if(! ~ $files '')
+	rm -rf $files
+dircp /n/replica /n/import
+rm -rf /n/import/dist/replica/client
+
+# purge known build artifacts:
+@{cd /n/import/sys/src && mk clean} >/dev/null >[2=1]
+@{cd /n/import/sys/src/9 && mk clean} >/dev/null >[2=1]
+sources/clean /n/import # per-file checks
+
+# sourcesdump enforces permissions; secure files should be created
+# in the working filesystem to avoid confusing replica:
+secure=(adm/keys\
+	adm/netkeys\
+	mail/box/glenda/mbox\
+	sys/lib/sysconfig/auth/boundary/httppasswords\
+	sys/lib/sysconfig/auth/boundary/keys\
+	sys/lib/sysconfig/auth/boundary/netkeys)
+for(f in $secure){
+	mkdir -p /n/import/`{basename -d $f}
+	touch /n/import/$f
+}
+
+# recreate replica for distribution:
+replica/applytime -r /n/import $serverdb >[2]/dev/null
+
+touch /tmp/plan9.db
+replica/updatedb -p /n/import/dist/replica/plan9.proto\
+		 -r /n/import\
+		 -t $servertime(1) 0\
+	/tmp/plan9.db >>/tmp/plan9.log
+replica/compactdb /tmp/plan9.db >/tmp/plan9.db.1 && mv /tmp/plan9.db.1 /tmp/plan9.db
+cp /tmp/plan9.^(db log) /n/import/dist/replica
+exit ''

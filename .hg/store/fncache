@@ -1,0 +1,14 @@
+data/sources/conv.i
+data/cmd/replica/db.c.i
+data/cmd/localtime.c.i
+data/replica/sources.i
+data/cmd/replica/avl.c.i
+data/cmd/lsr.c.i
+data/cmd/mkfile.i
+data/cmd/replica/mkfile.i
+data/cmd/replica/util.c.i
+data/cmd/replica/all.h.i
+data/cmd/replica/applytime.c.i
+data/sources/mount.i
+data/sources/clean.i
+data/sources/prep.i

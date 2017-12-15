@@ -1,0 +1,87 @@
+#!/bin/rc
+# sources/conv - convert sources to Mercurial
+
+rfork en
+
+fn usage {
+	echo >[1=2] usage: sources/conv [-d dest] [-l dirlist] [-m message] [-u user] repo
+	exit usage
+}
+
+dest=''
+dirs=()
+message='import sources'
+user='The Plan 9 Authors <glenda@plan9.bell-labs.com>'
+while(~ $1 -*){
+	switch($1){
+	case -d
+		if(~ $#* 1)
+			usage
+		dest=$2
+		shift
+	case -l
+		if(~ $#* 1)
+			usage
+		dirs=`{read -m $2}
+		shift
+	case -m
+		if(~ $#* 1)
+			usage
+		message=$2
+		shift
+	case -u
+		if(~ $#* 1)
+			usage
+		user=$2
+		shift
+	case *
+		usage
+	}
+	shift
+}
+
+if(~ $#* 0)
+	usage
+
+repo=$1
+if(! test -d $repo)
+	hg init $repo
+
+# mount required filesystems:
+sources/mount
+
+lastpull=0
+if(test -f /tmp/lastpull)
+	lastpull=`{read /tmp/lastpull}
+
+if(~ $#dirs 0)
+	dirs=`{ls -drt /n/sourcesdump/*/*} # slow
+for(d in $dirs){
+	dump=`{echo $d | awk -F/ '{print $(NF-1) "/" $NF}'}
+	serverroot=$d/plan9
+
+	# assume dumped timezone for localtime:
+	cp $serverroot/adm/timezone/local /env/timezone
+
+	serverdb=$serverroot/dist/replica/plan9.db
+	serverlog=$serverroot/dist/replica/plan9.log
+	servertime=`{localtime -r $serverlog} # west of UTC for hg
+
+	# changesets are based upon changes to the replica log; it
+	# is not uncommon to skip several dumps:
+	if(test $servertime(1) -gt $lastpull(1)){
+		echo $servertime(1) $d
+		sources/prep
+
+		hg importfs -d $"servertime\
+			    -m $"message\
+			    -u $"user\
+			$repo /n/import
+		if(! ~ $dest '')
+			@{cd $repo; hg push $dest}
+
+		lastpull=$servertime
+		echo $lastpull >/tmp/lastpull
+	}
+}
+exit ''

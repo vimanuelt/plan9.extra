@@ -1,0 +1,70 @@
+#!/bin/rc
+# sources/clean - purge sources of build artifacts
+
+fn usage {
+	echo >[1=2] usage: sources/clean [-v] root
+	exit usage
+}
+
+verbose=0
+while(~ $1 -*){
+	switch($1){
+	case '-v'
+		verbose=1
+	case *
+		usage
+	}
+	shift
+}
+
+if(~ $#* 0)
+	usage
+
+cd $1
+for(f in `{lsr}){
+	f=`{basename -d $f}^/_`{basename $f}
+	if(test -f $f){
+		if(~ $verbose 1)
+			echo $f
+		rm -f $f
+	}
+}
+for(f in `{lsr}){
+	f=`{cleanname $f}
+	skip=1
+	switch($f){
+	case 386/*
+		if(~ $f 386/9* 386/ld.com 386/mbr 386/pbs*)
+			skip=0
+	case sys/lib/man/*
+		if(~ $f */lookman/index\
+			*/permind/out\
+			*/permind/toc)
+			skip=0
+	case sys/man/*
+		if(~ $f */INDEX\
+			*/INDEX.html\
+			*/searchindex\
+			*/man.out\
+			*/print.out)
+			skip=0
+	case sys/src/cmd/unix/drawterm/bin/*
+		skip=0
+	}
+	if(~ $skip 1){
+		# keep encumbered binaries:
+		if(! ~ $f 386/bin/aux/vmwarefs\
+			  386/bin/aux/isvmware\
+			  386/bin/aux/vmmousepoll)
+		if(~ `{file $f} *library\
+				*'plan 9 executable'*\
+				*'plan 9 boot image'*)
+			skip=0
+	}
+	if(~ $skip 0){
+		if(~ $verbose 1)
+			echo $f
+		rm -f $f
+	}
+}
+exit ''

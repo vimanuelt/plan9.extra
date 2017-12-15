@@ -1,0 +1,15 @@
+</$objtype/mkfile
+
+TARG=\
+	localtime\
+	lsr\
+
+BIN=/$objtype/bin
+</sys/src/cmd/mkmany
+
+all:V:		replica!all
+install:V:	replica!install
+clean:V:	replica!clean
+
+replica!%:V:
+	@{ cd replica; mk $stem }

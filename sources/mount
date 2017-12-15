@@ -1,0 +1,20 @@
+#!/bin/rc
+# sources/mount - mount required filesystems
+
+9fs sourcesdump
+
+for(f in import replica){
+	if(! test -f /tmp/$f){
+		dd -if /dev/zero -of /tmp/$f -bs 1024k -count 512 >[2]/dev/null
+		fossil/flfmt -y /tmp/$f
+		{	echo srv $f
+			echo srv -p $f.fscons
+			echo fsys main config
+			echo fsys main open -APVWa
+		} | fossil/conf -w /tmp/$f
+	}
+	if(! test -e /srv/$f)
+		fossil/fossil -f /tmp/$f
+	mount -c /srv/$f /n/$f
+}
+exit ''

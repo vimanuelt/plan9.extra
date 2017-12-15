@@ -1,0 +1,15 @@
+</$objtype/mkfile
+
+TARG=\
+	applytime\
+
+OFILES=\
+	avl.$O\
+	db.$O\
+	util.$O\
+
+HFILES=\
+	all.h\
+
+BIN=/$objtype/bin/replica
+</sys/src/cmd/mkmany
